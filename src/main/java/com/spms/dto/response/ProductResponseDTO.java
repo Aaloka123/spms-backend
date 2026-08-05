@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -39,5 +40,8 @@ public class ProductResponseDTO {
     private String description;
 
     private Boolean isActive;
+
+    // MapStruct maps this automatically from Product.createdAt
+    private LocalDateTime createdAt;
 
 }

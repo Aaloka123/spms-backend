@@ -53,8 +53,10 @@ public class SecurityConfig {
                         .requestMatchers(ApiPath.AUTH + "/login").permitAll()
                         .requestMatchers(HttpMethod.GET, ApiPath.ROLES + "/**").permitAll()
                         .requestMatchers(HttpMethod.POST, ApiPath.USERS).permitAll()
-                        .anyRequest().authenticated()
-                )
+                        .requestMatchers(HttpMethod.GET, ApiPath.PRODUCTS).permitAll()
+                        .requestMatchers(HttpMethod.GET, ApiPath.PRODUCTS + "/new-arrivals").permitAll()
+                        .requestMatchers(HttpMethod.GET, ApiPath.PRODUCTS + "/**").permitAll()
+                        .anyRequest().authenticated())
 
                 .formLogin(AbstractHttpConfigurer::disable)
 

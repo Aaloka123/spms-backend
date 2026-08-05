@@ -9,6 +9,7 @@ import com.spms.mapper.ProductMapper;
 import com.spms.app.repository.ProductRepository;
 import com.spms.service.ProductService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -42,7 +43,21 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public List<ProductResponseDTO> getAllProducts() {
 
-        return productMapper.toResponseDTOList(productRepository.findAll());
+        // Only return active products for the public Home page
+        return productMapper.toResponseDTOList(
+                productRepository.findByIsActiveTrue());
+    }
+
+    // THIS method was missing in your editor copy — it must match ProductService
+    @Override
+    public List<ProductResponseDTO> getNewArrivals(int limit) {
+
+        // PageRequest.of(0, limit):
+        // 0 = first page
+        // limit = how many products to return (e.g. 4)
+        return productMapper.toResponseDTOList(
+                productRepository.findByIsActiveTrueOrderByCreatedAtDesc(
+                        PageRequest.of(0, limit)));
     }
 
     @Override
