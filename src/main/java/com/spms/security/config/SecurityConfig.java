@@ -50,12 +50,22 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 .authorizeHttpRequests(auth -> auth
+                        // Public auth endpoints (OTP login flow)
                         .requestMatchers(ApiPath.AUTH + "/login").permitAll()
+                        .requestMatchers(ApiPath.AUTH + "/verify-otp").permitAll()
+                        .requestMatchers(ApiPath.AUTH + "/forgot-password").permitAll()
+                        .requestMatchers(ApiPath.AUTH + "/reset-password").permitAll()
+
+                        // Public register + roles
                         .requestMatchers(HttpMethod.GET, ApiPath.ROLES + "/**").permitAll()
                         .requestMatchers(HttpMethod.POST, ApiPath.USERS).permitAll()
+
+                        // Public product reads (Home page)
                         .requestMatchers(HttpMethod.GET, ApiPath.PRODUCTS).permitAll()
                         .requestMatchers(HttpMethod.GET, ApiPath.PRODUCTS + "/new-arrivals").permitAll()
                         .requestMatchers(HttpMethod.GET, ApiPath.PRODUCTS + "/**").permitAll()
+
+                        // Everything else needs JWT
                         .anyRequest().authenticated())
 
                 .formLogin(AbstractHttpConfigurer::disable)

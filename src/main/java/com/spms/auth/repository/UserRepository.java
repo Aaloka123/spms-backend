@@ -28,6 +28,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // Check phone number excluding current user
     boolean existsByPhoneNumberAndIdNot(String phoneNumber, Long id);
 
+    //Forgot-password looks up user by email
+    @EntityGraph(attributePaths = "role")
+    Optional<User> findByEmail(String email);
+
     // Finds a user by username for login authentication
    @EntityGraph(attributePaths = "role")
    Optional<User> findByUsername(String username);
