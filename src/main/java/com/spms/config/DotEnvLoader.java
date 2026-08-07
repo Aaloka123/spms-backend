@@ -9,6 +9,7 @@ import java.nio.file.Paths;
  * Loads key=value pairs from a local .env file into system properties
  * so Spring can resolve ${EMAIL_USER}, ${JWT_SECRET}, etc.
  * Does not override variables that are already set in the OS/IDE.
+ * Later lines in .env override earlier lines (last value wins).
  */
 public final class DotEnvLoader {
 
@@ -18,7 +19,6 @@ public final class DotEnvLoader {
     public static void load() {
         Path envFile = Paths.get(".env");
         if (!Files.exists(envFile)) {
-            // Also try project root when running from IDE with different working dir
             envFile = Paths.get(System.getProperty("user.dir"), ".env");
         }
         if (!Files.exists(envFile)) {
@@ -40,13 +40,12 @@ public final class DotEnvLoader {
                 String key = line.substring(0, eq).trim();
                 String value = line.substring(eq + 1).trim();
 
-                // Do not override existing env / system properties
+                // OS / IDE env vars always win
                 if (System.getenv(key) != null) {
                     continue;
                 }
-                if (System.getProperty(key) != null) {
-                    continue;
-                }
+
+                // Last value in .env wins (so real values after placeholders work)
                 System.setProperty(key, value);
             }
             System.out.println("Loaded environment from .env");
