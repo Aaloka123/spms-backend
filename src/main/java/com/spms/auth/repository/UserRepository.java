@@ -37,4 +37,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
    Optional<User> findByUsername(String username);
     // Check if any user is assigned to a role
     boolean existsByRole_RoleId(Long roleId);
+
+    // Check if any user has a given role name (e.g. ADMIN)
+    boolean existsByRole_RoleName(String roleName);
+
+    // Find users with a given role name
+    @EntityGraph(attributePaths = "role")
+    java.util.List<User> findByRole_RoleName(String roleName);
 }
