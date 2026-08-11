@@ -1,5 +1,6 @@
 package com.spms.service.impl;
 
+import com.spms.dto.request.RegisterRequestDTO;
 import com.spms.dto.request.UserRequestDTO;
 import com.spms.dto.response.UserResponseDTO;
 import com.spms.auth.entity.Role;
@@ -33,7 +34,7 @@ public class UserServiceImpl implements UserService {
 
     // Create a new user.
     @Override
-    public UserResponseDTO createUser(UserRequestDTO requestDTO) {
+    public UserResponseDTO createUser(RegisterRequestDTO requestDTO) {
 
         // Check username
         if (userRepository.existsByUsername(requestDTO.getUsername())) {
@@ -52,17 +53,20 @@ public class UserServiceImpl implements UserService {
             throw new PhoneNumberAlreadyExistsException(requestDTO.getPhoneNumber());
         }
 
-        // Find role
-        Role role = roleRepository.findById(requestDTO.getRoleId())
+        // Public signup always gets USER role
+        Role role = roleRepository.findByRoleName("USER")
                 .orElseThrow(() ->
                         new RoleNotFoundException(
-                                "Role not found with id: " + requestDTO.getRoleId()));
+                                "USER role not found. Please seed roles first."));
 
         // Convert DTO to Entity
         User user = userMapper.toEntity(requestDTO);
 
         // Assign role
         user.setRole(role);
+
+        // New accounts are enabled by default
+        user.setEnabled(true);
 
         // Encode password before saving
         user.setPassword(passwordEncoder.encode(requestDTO.getPassword()));

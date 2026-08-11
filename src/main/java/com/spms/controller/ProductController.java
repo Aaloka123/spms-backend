@@ -51,6 +51,14 @@ public class ProductController {
         return ResponseEntity.ok(productService.getNewArrivals(limit));
     }
 
+    // Admin/Pharmacist: all products (active + inactive)
+    // Keep ABOVE /{id} so "admin" is not treated as an id
+    @GetMapping("/admin/all")
+    @PreAuthorize("hasAnyAuthority('ADMIN','PHARMACIST')")
+    public ResponseEntity<List<ProductResponseDTO>> getAllProductsForAdmin() {
+        return ResponseEntity.ok(productService.getAllProductsForAdmin());
+    }
+
     // Get one product by id
     // Public endpoint - no login needed (Home product details)
     // {id:\\d+} means id must be a number only
@@ -82,5 +90,6 @@ public class ProductController {
 
         return ResponseEntity.ok("Product deleted successfully.");
     }
+
 
 }

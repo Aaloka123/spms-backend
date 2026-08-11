@@ -14,6 +14,9 @@ public interface ProductService {
     // Retrieve all active products (Home page list).
     List<ProductResponseDTO> getAllProducts();
 
+    // Retrieve all products for admin.
+    List<ProductResponseDTO> getAllProductsForAdmin();
+    
     // Retrieve the newest active products (Home New Arrivals).
     // limit = how many products to return (e.g. 4)
     List<ProductResponseDTO> getNewArrivals(int limit);

@@ -48,7 +48,12 @@ public class ProductServiceImpl implements ProductService {
                 productRepository.findByIsActiveTrue());
     }
 
-    // THIS method was missing in your editor copy — it must match ProductService
+    @Override
+    public List<ProductResponseDTO> getAllProductsForAdmin() {
+        // Admin sees all products (active + inactive)
+        return productMapper.toResponseDTOList(productRepository.findAll());
+    }
+
     @Override
     public List<ProductResponseDTO> getNewArrivals(int limit) {
 
@@ -98,16 +103,16 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public void deleteProduct(Long id) {
+public void deleteProduct(Long id) {
 
-        // Find product by ID
-        Product product = productRepository.findById(id)
-                .orElseThrow(() ->
-                        new ProductNotFoundException(
-                                "Product not found with id: " + id));
+    Product product = productRepository.findById(id)
+            .orElseThrow(() ->
+                    new ProductNotFoundException(
+                            "Product not found with id: " + id));
 
-        // Delete product
-        productRepository.delete(product);
-    }
+    // Soft delete: keep row, hide from public list
+    product.setIsActive(false);
+    productRepository.save(product);
+}
 
 }

@@ -8,6 +8,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpMethod;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,6 +27,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final UserDetailsServiceImpl userDetailsService;
     private final HandlerExceptionResolver handlerExceptionResolver;
+
+    /**
+     * Skip JWT parsing on public endpoints.
+     * Prevents expired tokens in the browser from blocking signup/login.
+     */
+    @Override
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
+        String path = request.getRequestURI();
+        String method = request.getMethod();
+
+        if (path.startsWith("/api/auth/")) {
+            return true;
+        }
+        if (HttpMethod.POST.matches(method) && path.equals("/api/users")) {
+            return true;
+        }
+        if (HttpMethod.GET.matches(method) && path.startsWith("/api/roles")) {
+            return true;
+        }
+        if (HttpMethod.GET.matches(method) && path.startsWith("/api/products")) {
+            return true;
+        }
+        return false;
+    }
 
     @Override
     protected void doFilterInternal(

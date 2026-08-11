@@ -9,53 +9,80 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
-@Service // Marks this class as a Spring service
-@RequiredArgsConstructor // Generates constructor for final fields
+@Service
+@RequiredArgsConstructor
 public class EmailService {
 
-    // Logger for recording errors and application events
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
 
-    // Spring's email sender
     private final JavaMailSender mailSender;
 
-    // Reads sender email from application.properties
     @Value("${spms.mail.from:${spring.mail.username}}")
     private String fromAddress;
 
-    // Sends OTP for login verification
+    @Value("${spms.otp.ttl-minutes:30}")
+    private int otpTtlMinutes;
+
+    @Value("${spms.frontend-url:http://localhost:4200}")
+    private String frontendUrl;
+
     public void sendLoginOtp(String toEmail, String code) {
-        send(toEmail,
-                "Your SPMS login verification code",
-                "Your login code is: " + code + "\nIt expires in 30 minutes.");
+        sendOtpEmail(
+                toEmail,
+                code,
+                "Your MedNexus login verification code",
+                "Verify your login",
+                "Use the verification code below to sign in to your MedNexus account.");
     }
 
-    // Sends OTP for password reset
     public void sendPasswordResetOtp(String toEmail, String code) {
-        send(toEmail,
-                "Your SPMS password reset code",
-                "Your password reset code is: " + code + "\nIt expires in 30 minutes.");
+        sendOtpEmail(
+                toEmail,
+                code,
+                "Your MedNexus password reset code",
+                "Reset your password",
+                "Use the verification code below to reset your MedNexus account password.");
     }
 
-    // Common method that creates and sends an email
-    private void send(String to, String subject, String body) {
+    private void sendOtpEmail(
+            String toEmail,
+            String code,
+            String subject,
+            String headline,
+            String intro) {
+        String html = EmailHtmlBuilder.otpVerification(
+                headline,
+                intro,
+                code,
+                otpTtlMinutes,
+                frontendUrl);
+
+        String plainText = """
+                %s
+
+                Your verification code is: %s
+
+                This code expires in %d minutes. Do not share it with anyone.
+
+                — The MedNexus Team
+                """.formatted(intro, code, otpTtlMinutes);
+
+        sendHtmlEmail(toEmail, subject, html, plainText);
+    }
+
+    private void sendHtmlEmail(String to, String subject, String html, String plainText) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
-
-            // Helps build the email message
-            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+            // true = multipart (HTML + plain text fallback)
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
             helper.setFrom(fromAddress);
             helper.setTo(to);
             helper.setSubject(subject);
-            helper.setText(body);
+            helper.setText(plainText, html);
 
-            // Sends the email
             mailSender.send(message);
-
         } catch (Exception ex) {
-
-            // Logs an error if sending fails
             log.error("Failed to send email to {}", to, ex);
         }
     }

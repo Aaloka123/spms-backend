@@ -9,11 +9,15 @@ import org.mapstruct.MappingTarget;
 
 import java.util.List;
 
-//Mapper for converting between Product Entity and DTOs.
+// Mapper for converting between Product Entity and DTOs.
 @Mapper(componentModel = "spring")
 public interface ProductMapper {
 
     // Convert ProductRequestDTO to Product Entity
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "isActive", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
     Product toEntity(ProductRequestDTO requestDTO);
 
     // Convert Product Entity to ProductResponseDTO

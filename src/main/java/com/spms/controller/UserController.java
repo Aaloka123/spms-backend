@@ -1,6 +1,7 @@
 package com.spms.controller;
 
 import com.spms.constants.ApiPath;
+import com.spms.dto.request.RegisterRequestDTO;
 import com.spms.dto.request.UserRequestDTO;
 import com.spms.dto.response.UserResponseDTO;
 import com.spms.service.UserService;
@@ -24,7 +25,7 @@ public class UserController {
     // Create a new user
     @PostMapping
     public ResponseEntity<UserResponseDTO> createUser(
-            @Valid @RequestBody UserRequestDTO requestDTO) {
+            @Valid @RequestBody RegisterRequestDTO requestDTO) {
 
         UserResponseDTO response = userService.createUser(requestDTO);
 
