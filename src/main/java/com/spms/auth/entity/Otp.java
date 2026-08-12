@@ -29,7 +29,8 @@ public class Otp {
     @Column(name = "otp_token", nullable = false, unique = true, length = 64)
     private String otpToken;
 
-    @Column(nullable = false, length = 6)
+    /** BCrypt hash of the 6-digit code — never store the raw OTP. */
+    @Column(nullable = false, length = 100)
     private String code;
 
     @Column(name = "expires_at", nullable = false)

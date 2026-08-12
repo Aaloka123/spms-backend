@@ -10,6 +10,7 @@ import com.spms.exception.InvalidOtpException;
 import com.spms.service.EmailService;
 import com.spms.service.OtpService;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +29,7 @@ public class OtpServiceImpl implements OtpService {
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final Executor mailExecutor;
+    private final PasswordEncoder passwordEncoder;
 
     // How long OTP stays valid (from application.properties)
     private final int otpTtlMinutes;
@@ -38,11 +40,13 @@ public class OtpServiceImpl implements OtpService {
             UserRepository userRepository,
             EmailService emailService,
             @Qualifier("mailExecutor") Executor mailExecutor,
+            PasswordEncoder passwordEncoder,
             @org.springframework.beans.factory.annotation.Value("${spms.otp.ttl-minutes:30}") int otpTtlMinutes) {
         this.otpRepository = otpRepository;
         this.userRepository = userRepository;
         this.emailService = emailService;
         this.mailExecutor = mailExecutor;
+        this.passwordEncoder = passwordEncoder;
         this.otpTtlMinutes = otpTtlMinutes;
     }
 
@@ -124,7 +128,7 @@ public class OtpServiceImpl implements OtpService {
         // Clean expired OTPs (safe cleanup when issuing a new one)
         otpRepository.deleteByExpiresAtBefore(LocalDateTime.now());
 
-        // 6-digit code, e.g. 004821
+        // 6-digit code, e.g. 004821 — send this by email only
         String code = String.format("%06d", RANDOM.nextInt(1_000_000));
 
         // Random token for frontend (not the code itself)
@@ -135,7 +139,8 @@ public class OtpServiceImpl implements OtpService {
         // Link to user without full load
         otp.setUser(userRepository.getReferenceById(userId));
         otp.setOtpToken(otpToken);
-        otp.setCode(code);
+        // Store BCrypt hash only — never the plain OTP in DB
+        otp.setCode(passwordEncoder.encode(code));
         otp.setExpiresAt(LocalDateTime.now().plusMinutes(otpTtlMinutes));
 
         otpRepository.save(otp);
@@ -181,9 +186,9 @@ public class OtpServiceImpl implements OtpService {
             throw new InvalidOtpException("Verification code has expired. Please login again.");
         }
 
-        if (!otp.getCode().equals(normalizedCode)) {
+        if (!passwordEncoder.matches(normalizedCode, otp.getCode())) {
             throw new InvalidOtpException(
-                    "Incorrect verification code. Use the code from the SAME otp row as your otpToken.");
+                    "Incorrect verification code. Please try again or login again for a new code.");
         }
 
         return otp;
