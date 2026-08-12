@@ -2,7 +2,6 @@ package com.spms.service;
 
 /**
  * HTML email templates (same style as MedNexus EmailHtmlBuilder).
- * Keep this focused on OTP emails for now.
  */
 final class EmailHtmlBuilder {
 
@@ -20,6 +19,7 @@ final class EmailHtmlBuilder {
             String intro,
             String code,
             int ttlMinutes,
+            String logoUrl,
             String frontendUrl) {
         String safeHeadline = escape(headline);
         String safeIntro = escape(intro);
@@ -58,10 +58,17 @@ final class EmailHtmlBuilder {
                                 MUTED,
                                 BRAND),
                 headline,
+                logoUrl,
                 frontendUrl);
     }
 
-    private static String brandHeader() {
+    private static String brandHeader(String logoUrl) {
+        if (logoUrl != null && !logoUrl.isBlank()) {
+            return """
+                    <img src="%s" alt="%s" width="168" style="display:block;width:168px;max-width:100%%;height:auto;margin:0 auto;border:0;" />
+                    """
+                    .formatted(escape(logoUrl), BRAND);
+        }
         return """
                 <p style="margin:0;font-size:30px;line-height:1.1;font-weight:700;letter-spacing:-0.03em;color:%s;">%s</p>
                 <p style="margin:8px 0 0;font-size:13px;line-height:1.4;font-weight:500;letter-spacing:0.04em;text-transform:uppercase;color:%s;">Pharmacy Management</p>
@@ -69,7 +76,7 @@ final class EmailHtmlBuilder {
                 .formatted(TEAL, BRAND, MUTED);
     }
 
-    private static String layout(String bodyContent, String preheader, String frontendUrl) {
+    private static String layout(String bodyContent, String preheader, String logoUrl, String frontendUrl) {
         String safePreheader = escape(preheader);
         String safeWebsiteUrl = escape(
                 frontendUrl == null || frontendUrl.isBlank()
@@ -119,7 +126,15 @@ final class EmailHtmlBuilder {
                 </body>
                 </html>
                 """
-                .formatted(BRAND, safePreheader, brandHeader(), bodyContent, safeWebsiteUrl, TEAL, MUTED, BRAND);
+                .formatted(
+                        BRAND,
+                        safePreheader,
+                        brandHeader(logoUrl),
+                        bodyContent,
+                        safeWebsiteUrl,
+                        TEAL,
+                        MUTED,
+                        BRAND);
     }
 
     private static String escape(String value) {

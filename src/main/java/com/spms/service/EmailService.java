@@ -1,5 +1,6 @@
 package com.spms.service;
 
+import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -20,11 +21,22 @@ public class EmailService {
     @Value("${spms.mail.from:${spring.mail.username}}")
     private String fromAddress;
 
+    /** Shown in inbox as the sender name, e.g. "MedNexus" */
+    @Value("${spms.mail.from-name:MedNexus}")
+    private String fromName;
+
     @Value("${spms.otp.ttl-minutes:30}")
     private int otpTtlMinutes;
 
     @Value("${spms.frontend-url:http://localhost:4200}")
     private String frontendUrl;
+
+    /**
+     * Public logo image URL (Cloudinary). Same MedNexus logo used in Pharmacy Management emails.
+     * Leave blank to fall back to text branding.
+     */
+    @Value("${spms.mail.logo-url:}")
+    private String logoUrl;
 
     public void sendLoginOtp(String toEmail, String code) {
         sendOtpEmail(
@@ -53,8 +65,9 @@ public class EmailService {
         String html = EmailHtmlBuilder.otpVerification(
                 headline,
                 intro,
-                code,
+                formatCodeForDisplay(code),
                 otpTtlMinutes,
+                logoUrl,
                 frontendUrl);
 
         String plainText = """
@@ -73,17 +86,26 @@ public class EmailService {
     private void sendHtmlEmail(String to, String subject, String html, String plainText) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
-            // true = multipart (HTML + plain text fallback)
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setFrom(fromAddress);
+            helper.setFrom(new InternetAddress(fromAddress, fromName, "UTF-8"));
             helper.setTo(to);
             helper.setSubject(subject);
+            // plain + html multipart (Gmail shows the HTML part)
             helper.setText(plainText, html);
 
             mailSender.send(message);
+            log.info("Sent HTML OTP email to {} from {}", to, fromAddress);
         } catch (Exception ex) {
             log.error("Failed to send email to {}", to, ex);
         }
+    }
+
+    /** 943601 → "9 4 3 6 0 1" for MedNexus-style HTML emails */
+    private static String formatCodeForDisplay(String code) {
+        if (code == null || code.isBlank()) {
+            return "";
+        }
+        return String.join(" ", code.trim().split(""));
     }
 }

@@ -32,6 +32,7 @@ public class ProductServiceImpl implements ProductService {
 
         // Convert DTO to Entity
         Product product = productMapper.toEntity(requestDTO);
+        product.setIsActive(true);
 
         // Save product
         Product savedProduct = productRepository.save(product);
@@ -102,17 +103,16 @@ public class ProductServiceImpl implements ProductService {
         return productMapper.toResponseDTO(updatedProduct);
     }
 
-    @Override
-public void deleteProduct(Long id) {
+        @Override
+    public void deleteProduct(Long id) {
 
-    Product product = productRepository.findById(id)
-            .orElseThrow(() ->
-                    new ProductNotFoundException(
-                            "Product not found with id: " + id));
+        Product product = productRepository.findById(id)
+                .orElseThrow(() ->
+                        new ProductNotFoundException(
+                                "Product not found with id: " + id));
 
-    // Soft delete: keep row, hide from public list
-    product.setIsActive(false);
-    productRepository.save(product);
-}
-
+        // Soft delete: keep row, hide from public list
+        product.setIsActive(false);
+        productRepository.save(product);
+    }
 }

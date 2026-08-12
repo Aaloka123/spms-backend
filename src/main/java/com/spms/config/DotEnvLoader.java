@@ -49,8 +49,27 @@ public final class DotEnvLoader {
                 System.setProperty(key, value);
             }
             System.out.println("Loaded environment from .env");
+            logMasked("EMAIL_USER", System.getProperty("EMAIL_USER"));
+            logMasked("MAIL_FROM", System.getProperty("MAIL_FROM"));
+            String fromName = System.getProperty("MAIL_FROM_NAME");
+            if (fromName != null && !fromName.isBlank()) {
+                System.out.println("MAIL_FROM_NAME=" + fromName);
+            }
         } catch (Exception ex) {
             System.err.println("Failed to load .env: " + ex.getMessage());
+        }
+    }
+
+    private static void logMasked(String key, String value) {
+        if (value == null || value.isBlank()) {
+            System.out.println(key + "=(not set)");
+            return;
+        }
+        int at = value.indexOf('@');
+        if (at > 0) {
+            System.out.println(key + "=" + value.charAt(0) + "***" + value.substring(at));
+        } else {
+            System.out.println(key + "=(set)");
         }
     }
 }
