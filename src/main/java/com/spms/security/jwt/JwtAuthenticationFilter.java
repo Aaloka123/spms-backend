@@ -46,7 +46,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (HttpMethod.GET.matches(method) && path.startsWith("/api/roles")) {
             return true;
         }
-        if (HttpMethod.GET.matches(method) && path.startsWith("/api/products")) {
+        // Public product GETs skip JWT parsing.
+        // Admin product GETs (e.g. /api/products/admin/all) MUST still authenticate.
+        if (HttpMethod.GET.matches(method)
+                && path.startsWith("/api/products")
+                && !path.startsWith("/api/products/admin")) {
             return true;
         }
         return false;

@@ -60,10 +60,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, ApiPath.ROLES + "/**").permitAll()
                         .requestMatchers(HttpMethod.POST, ApiPath.USERS).permitAll()
 
+                        // Admin product APIs need JWT (list active + inactive, etc.)
+                        .requestMatchers(ApiPath.PRODUCTS + "/admin/**").authenticated()
+
                         // Public product reads (Home page)
                         .requestMatchers(HttpMethod.GET, ApiPath.PRODUCTS).permitAll()
                         .requestMatchers(HttpMethod.GET, ApiPath.PRODUCTS + "/new-arrivals").permitAll()
-                        .requestMatchers(HttpMethod.GET, ApiPath.PRODUCTS + "/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, ApiPath.PRODUCTS + "/*").permitAll()
 
                         // Everything else needs JWT
                         .anyRequest().authenticated())
