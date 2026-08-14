@@ -1,7 +1,6 @@
 package com.spms.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,7 +11,7 @@ public class VerifyOtpRequestDTO {
     @NotBlank
     private String otpToken;
 
+    /** 6-digit code; spaces allowed (stripped server-side), e.g. "1 2 3 4 5 6" or "123456" */
     @NotBlank
-    @Pattern(regexp = "\\d{6}", message = "Code must be 6 digits")
     private String code;
 }

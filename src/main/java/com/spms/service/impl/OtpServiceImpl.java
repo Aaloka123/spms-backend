@@ -164,7 +164,8 @@ public class OtpServiceImpl implements OtpService {
             throw new InvalidOtpException("Verification session is invalid.");
         }
 
-        String normalizedCode = code == null ? "" : code.trim();
+        // Allow codes copied from email with spaces: "4 2 7 6 2 8" → "427628"
+        String normalizedCode = code == null ? "" : code.replaceAll("\\D", "");
         if (!normalizedCode.matches("\\d{6}")) {
             throw new InvalidOtpException("Enter the 6-digit verification code.");
         }
