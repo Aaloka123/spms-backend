@@ -11,18 +11,21 @@ import com.spms.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 // Service implementation for Product operations.
 @Service
 @RequiredArgsConstructor
+@Transactional(transactionManager = "appTransactionManager", readOnly = true)
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
 
     @Override
+    @Transactional(transactionManager = "appTransactionManager")
     public ProductResponseDTO createProduct(ProductRequestDTO requestDTO) {
 
         // Check product name
@@ -58,12 +61,12 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public List<ProductResponseDTO> getNewArrivals(int limit) {
 
-        // PageRequest.of(0, limit):
-        // 0 = first page
-        // limit = how many products to return (e.g. 4)
+        // PageRequest requires page size >= 1
+        int safeLimit = (limit <= 0) ? 4 : Math.min(limit, 100);
+
         return productMapper.toResponseDTOList(
                 productRepository.findByIsActiveTrueOrderByCreatedAtDesc(
-                        PageRequest.of(0, limit)));
+                        PageRequest.of(0, safeLimit)));
     }
 
     @Override
@@ -80,6 +83,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional(transactionManager = "appTransactionManager")
     public ProductResponseDTO updateProduct(Long id, ProductRequestDTO requestDTO) {
 
         // Find product by ID
@@ -103,7 +107,8 @@ public class ProductServiceImpl implements ProductService {
         return productMapper.toResponseDTO(updatedProduct);
     }
 
-        @Override
+    @Override
+    @Transactional(transactionManager = "appTransactionManager")
     public void deleteProduct(Long id) {
 
         Product product = productRepository.findById(id)

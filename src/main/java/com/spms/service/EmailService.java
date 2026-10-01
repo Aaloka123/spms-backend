@@ -121,7 +121,7 @@ public class EmailService {
             mailSender.send(message);
             log.info("Sent HTML OTP email to {} from {}", to, fromAddress);
         } catch (Exception ex) {
-            log.error("Failed to send email to {}", to, ex);
+            log.error("Failed to send email to {} with subject '{}': {}", to, subject, ex.getMessage(), ex);
         }
     }
 
@@ -130,8 +130,11 @@ public class EmailService {
         if (code == null || code.isBlank()) {
             return "";
         }
-        String digits = code.replaceAll("\\D", "");
-        StringBuilder spaced = new StringBuilder();
+        String digits = code.trim().replaceAll("\\D", "");
+        if (digits.isEmpty()) {
+            return "";
+        }
+        StringBuilder spaced = new StringBuilder(digits.length() * 2);
         for (int i = 0; i < digits.length(); i++) {
             if (i > 0) {
                 spaced.append(' ');

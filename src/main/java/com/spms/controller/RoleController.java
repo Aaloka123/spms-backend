@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,8 +20,9 @@ public class RoleController {
 
     private final RoleService roleService;
 
-    // Create a new role
+    // Create a new role (ADMIN only)
     @PostMapping
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<RoleResponseDTO> createRole(
             @Valid @RequestBody RoleRequestDTO roleRequestDTO) {
 
@@ -47,8 +49,9 @@ public class RoleController {
         return ResponseEntity.ok(role);
     }
 
-    // Update an existing role
+    // Update an existing role (ADMIN only)
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<RoleResponseDTO> updateRole(
             @PathVariable Long id,
             @Valid @RequestBody RoleRequestDTO roleRequestDTO) {
@@ -58,8 +61,9 @@ public class RoleController {
         return ResponseEntity.ok(updatedRole);
     }
 
-    // Delete a role by its ID
+    // Delete a role by its ID (ADMIN only)
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<String> deleteRole(@PathVariable Long id) {
 
         roleService.deleteRole(id);
