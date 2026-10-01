@@ -1,5 +1,6 @@
 package com.spms.security.jwt;
 
+import com.spms.constants.ApiPath;
 import com.spms.exception.InvalidTokenException;
 import com.spms.exception.TokenExpiredException;
 import com.spms.security.service.UserDetailsServiceImpl;
@@ -37,20 +38,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         String method = request.getMethod();
 
-        if (path.startsWith("/api/auth/")) {
+        if (path.startsWith(ApiPath.AUTH + "/")) {
             return true;
         }
-        if (HttpMethod.POST.matches(method) && path.equals("/api/users")) {
+        if (HttpMethod.POST.matches(method) && path.equals(ApiPath.USERS)) {
             return true;
         }
-        if (HttpMethod.GET.matches(method) && path.startsWith("/api/roles")) {
+        if (HttpMethod.GET.matches(method) && path.startsWith(ApiPath.ROLES)) {
             return true;
         }
         // Public product GETs skip JWT parsing.
         // Admin product GETs (e.g. /api/products/admin/all) MUST still authenticate.
         if (HttpMethod.GET.matches(method)
-                && path.startsWith("/api/products")
-                && !path.startsWith("/api/products/admin")) {
+                && path.startsWith(ApiPath.PRODUCTS)
+                && !path.startsWith(ApiPath.PRODUCTS + "/admin")) {
             return true;
         }
         return false;
