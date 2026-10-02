@@ -9,6 +9,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -31,14 +32,32 @@ public class JwtService {
     }
 
     public String generateToken(UserDetails userDetails) {
-        return Jwts.builder()
+        String role = "ROLE_USER";
+        if (userDetails.getAuthorities() != null && !userDetails.getAuthorities().isEmpty()) {
+            role = userDetails.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .filter(a -> a != null && !a.isBlank())
+                    .findFirst()
+                    .orElse("ROLE_USER");
+        }
+
+        Long userId = null;
+        if (userDetails instanceof CustomUserDetails customUserDetails && customUserDetails.getUser() != null) {
+            userId = customUserDetails.getUser().getId();
+        }
+
+        var builder = Jwts.builder()
                 .subject(userDetails.getUsername())
-                .claim("userId", ((CustomUserDetails) userDetails).getUser().getId())
-                .claim("role", userDetails.getAuthorities().iterator().next().getAuthority())
+                .claim("role", role)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
-                .signWith(getSigningKey())
-                .compact();
+                .signWith(getSigningKey());
+
+        if (userId != null) {
+            builder.claim("userId", userId);
+        }
+
+        return builder.compact();
     }
 
     public String extractUsername(String token) {

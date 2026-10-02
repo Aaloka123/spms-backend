@@ -38,7 +38,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         String method = request.getMethod();
 
-        if (path.startsWith(ApiPath.AUTH + "/")) {
+        // Preflight CORS requests should not be evaluated for JWT authentication
+        if (HttpMethod.OPTIONS.matches(method)) {
+            return true;
+        }
+
+        if (path.equals(ApiPath.AUTH) || path.startsWith(ApiPath.AUTH + "/")) {
             return true;
         }
         if (HttpMethod.POST.matches(method) && path.equals(ApiPath.USERS)) {
