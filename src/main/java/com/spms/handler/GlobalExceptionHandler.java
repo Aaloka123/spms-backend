@@ -336,8 +336,11 @@ public class GlobalExceptionHandler {
         // Set short title of the error
         problemDetail.setTitle("Internal Server Error");
 
-        // Set detailed error message
-        problemDetail.setDetail(ex.getMessage());
+        // Set detailed error message with safe fallback if null/blank
+        String detailMessage = (ex.getMessage() != null && !ex.getMessage().isBlank())
+                ? ex.getMessage()
+                : "An unexpected internal server error occurred. Please try again later.";
+        problemDetail.setDetail(detailMessage);
 
         // Set request URI where the error occurred
         problemDetail.setInstance(java.net.URI.create(request.getRequestURI()));
@@ -458,6 +461,23 @@ public class GlobalExceptionHandler {
         Class<?> requiredType = ex.getRequiredType();
         String typeName = requiredType != null ? requiredType.getSimpleName() : "valid type";
         problemDetail.setDetail(String.format("Parameter '%s' should be of type '%s'.", ex.getName(), typeName));
+        problemDetail.setInstance(java.net.URI.create(request.getRequestURI()));
+        problemDetail.setProperty("timestamp", LocalDateTime.now());
+
+        return problemDetail;
+    }
+
+    // Handles illegal argument exceptions (Bad Request)
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ProblemDetail handleIllegalArgument(
+            IllegalArgumentException ex,
+            HttpServletRequest request) {
+
+        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        problemDetail.setTitle("Invalid Argument");
+        problemDetail.setDetail(ex.getMessage() != null && !ex.getMessage().isBlank()
+                ? ex.getMessage()
+                : "The request contains invalid arguments.");
         problemDetail.setInstance(java.net.URI.create(request.getRequestURI()));
         problemDetail.setProperty("timestamp", LocalDateTime.now());
 
