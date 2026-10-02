@@ -3,6 +3,7 @@ package com.spms.security.config;
 import com.spms.constants.ApiPath;
 import com.spms.security.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -29,6 +30,9 @@ import java.util.List;
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+
+    @Value("${spms.frontend-url:http://localhost:4200}")
+    private String frontendUrl;
 
     private final UserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
@@ -100,8 +104,12 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Angular dev server origin
-        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+        // Angular dev server origin + configured frontend URL
+        if (frontendUrl != null && !frontendUrl.isBlank() && !frontendUrl.equals("http://localhost:4200")) {
+            configuration.setAllowedOrigins(List.of("http://localhost:4200", frontendUrl.trim()));
+        } else {
+            configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+        }
 
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
