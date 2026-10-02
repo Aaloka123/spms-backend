@@ -21,7 +21,7 @@ import java.util.List;
 // Service implementation for Role operations.
 @Service
 @RequiredArgsConstructor
-@Transactional(transactionManager = "authTransactionManager")
+@Transactional(transactionManager = "authTransactionManager", readOnly = true)
 public class RoleServiceImpl implements RoleService {
 
     private final RoleRepository roleRepository;
@@ -30,17 +30,20 @@ public class RoleServiceImpl implements RoleService {
 
     // Create a new role.
     @Override
+    @Transactional(transactionManager = "authTransactionManager")
     public RoleResponseDTO saveRole(RoleRequestDTO roleRequestDTO) {
 
-        validateAllowedRoleName(roleRequestDTO.getRoleName());
+        String trimmedRoleName = roleRequestDTO.getRoleName() != null ? roleRequestDTO.getRoleName().trim() : "";
+        validateAllowedRoleName(trimmedRoleName);
 
         // Check role name
-        if (roleRepository.existsByRoleName(roleRequestDTO.getRoleName())) {
-            throw new RoleAlreadyExistsException(roleRequestDTO.getRoleName());
+        if (roleRepository.existsByRoleName(trimmedRoleName)) {
+            throw new RoleAlreadyExistsException(trimmedRoleName);
         }
 
         // Convert DTO to Entity using MapStruct
         Role role = roleMapper.toEntity(roleRequestDTO);
+        role.setRoleName(trimmedRoleName);
 
         // Save Entity
         Role savedRole = roleRepository.save(role);
@@ -70,6 +73,7 @@ public class RoleServiceImpl implements RoleService {
 
     // Update an existing role.
     @Override
+    @Transactional(transactionManager = "authTransactionManager")
     public RoleResponseDTO updateRole(Long id, RoleRequestDTO roleRequestDTO) {
 
         Role existingRole = roleRepository.findById(id)
@@ -77,15 +81,17 @@ public class RoleServiceImpl implements RoleService {
                         new RoleNotFoundException(
                                 "Role not found with id: " + id));
 
-        validateAllowedRoleName(roleRequestDTO.getRoleName());
+        String trimmedRoleName = roleRequestDTO.getRoleName() != null ? roleRequestDTO.getRoleName().trim() : "";
+        validateAllowedRoleName(trimmedRoleName);
 
         // Check role name
-        if (roleRepository.existsByRoleNameAndRoleIdNot(roleRequestDTO.getRoleName(), id)) {
-            throw new RoleAlreadyExistsException(roleRequestDTO.getRoleName());
+        if (roleRepository.existsByRoleNameAndRoleIdNot(trimmedRoleName, id)) {
+            throw new RoleAlreadyExistsException(trimmedRoleName);
         }
 
         // Update entity using mapper
         roleMapper.updateEntityFromDTO(roleRequestDTO, existingRole);
+        existingRole.setRoleName(trimmedRoleName);
 
         // Save updated entity
         Role updatedRole = roleRepository.save(existingRole);
@@ -96,6 +102,7 @@ public class RoleServiceImpl implements RoleService {
 
     // Delete a role.
     @Override
+    @Transactional(transactionManager = "authTransactionManager")
     public void deleteRole(Long id) {
 
         Role role = roleRepository.findById(id)
@@ -112,10 +119,10 @@ public class RoleServiceImpl implements RoleService {
     }
 
     private void validateAllowedRoleName(String roleName) {
-
-        if (!Roles.ADMIN.equals(roleName)
-                && !Roles.PHARMACIST.equals(roleName)
-                && !Roles.USER.equals(roleName)) {
+        String trimmed = (roleName != null) ? roleName.trim() : "";
+        if (!Roles.ADMIN.equals(trimmed)
+                && !Roles.PHARMACIST.equals(trimmed)
+                && !Roles.USER.equals(trimmed)) {
             throw new InvalidRoleNameException(roleName);
         }
     }

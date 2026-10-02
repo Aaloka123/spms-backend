@@ -61,11 +61,16 @@ public class ReportServiceImpl implements ReportService {
 
     // Convert User entity -> UserReportDTO
     private UserReportDTO toUserReport(User user) {
-        String firstName = user.getFirstName() != null ? user.getFirstName() : "";
-        String lastName = user.getLastName() != null ? user.getLastName() : "";
+        String firstName = user.getFirstName() != null ? user.getFirstName().trim() : "";
+        String lastName = user.getLastName() != null ? user.getLastName().trim() : "";
         String fullName = (firstName + " " + lastName).trim();
+        if (fullName.isEmpty()) {
+            fullName = user.getUsername() != null ? user.getUsername() : "N/A";
+        }
 
-        String roleName = user.getRole() != null ? user.getRole().getRoleName() : "N/A";
+        String roleName = (user.getRole() != null && user.getRole().getRoleName() != null)
+                ? user.getRole().getRoleName()
+                : "N/A";
 
         return new UserReportDTO(
                 user.getId(),
@@ -81,8 +86,8 @@ public class ReportServiceImpl implements ReportService {
     private VendorReportDTO toVendorReport(Vendor vendor) {
         return new VendorReportDTO(
                 vendor.getId(),
-                vendor.getVendorName(),
-                vendor.getContactPerson(),
+                vendor.getVendorName() != null ? vendor.getVendorName() : "N/A",
+                vendor.getContactPerson() != null ? vendor.getContactPerson() : "N/A",
                 vendor.getEmail(),
                 vendor.getPhoneNumber(),
                 vendor.getIsActive(),

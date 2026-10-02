@@ -68,6 +68,12 @@ public class EmailService {
             String subject,
             String headline,
             String intro) {
+
+        if (!StringUtils.hasText(toEmail)) {
+            log.warn("Cannot send OTP email: recipient email address is null or blank.");
+            return;
+        }
+
         ClassPathResource inlineLogo = new ClassPathResource(LOGO_CLASSPATH);
         boolean useInlineLogo = inlineLogo.exists();
 
@@ -95,7 +101,7 @@ public class EmailService {
                 — The MedNexus Team
                 """.formatted(intro, code, otpTtlMinutes);
 
-        sendHtmlEmail(toEmail, subject, html, plainText, useInlineLogo ? inlineLogo : null);
+        sendHtmlEmail(toEmail.trim(), subject, html, plainText, useInlineLogo ? inlineLogo : null);
     }
 
     private void sendHtmlEmail(
@@ -108,7 +114,10 @@ public class EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setFrom(new InternetAddress(fromAddress, fromName, "UTF-8"));
+            String effectiveFrom = StringUtils.hasText(fromAddress) ? fromAddress.trim() : "no-reply@mednexus.com";
+            String effectiveName = StringUtils.hasText(fromName) ? fromName.trim() : "MedNexus";
+
+            helper.setFrom(new InternetAddress(effectiveFrom, effectiveName, "UTF-8"));
             helper.setTo(to);
             helper.setSubject(subject);
             // plain + html multipart (Gmail shows the HTML part)
@@ -119,7 +128,7 @@ public class EmailService {
             }
 
             mailSender.send(message);
-            log.info("Sent HTML OTP email to {} from {}", to, fromAddress);
+            log.info("Sent HTML OTP email to {} from {}", to, effectiveFrom);
         } catch (Exception ex) {
             log.error("Failed to send email to {} with subject '{}': {}", to, subject, ex.getMessage(), ex);
         }

@@ -9,6 +9,8 @@ import com.spms.mapper.ProductMapper;
 import com.spms.app.repository.ProductRepository;
 import com.spms.service.ProductService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +23,8 @@ import java.util.List;
 @Transactional(transactionManager = "appTransactionManager", readOnly = true)
 public class ProductServiceImpl implements ProductService {
 
+    private static final Logger log = LoggerFactory.getLogger(ProductServiceImpl.class);
+
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
 
@@ -28,17 +32,21 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(transactionManager = "appTransactionManager")
     public ProductResponseDTO createProduct(ProductRequestDTO requestDTO) {
 
+        String trimmedName = requestDTO.getProductName() != null ? requestDTO.getProductName().trim() : "";
+
         // Check product name
-        if (productRepository.existsByProductName(requestDTO.getProductName())) {
-            throw new ProductAlreadyExistsException(requestDTO.getProductName());
+        if (productRepository.existsByProductName(trimmedName)) {
+            throw new ProductAlreadyExistsException(trimmedName);
         }
 
         // Convert DTO to Entity
         Product product = productMapper.toEntity(requestDTO);
+        product.setProductName(trimmedName);
         product.setIsActive(true);
 
         // Save product
         Product savedProduct = productRepository.save(product);
+        log.info("Successfully created product with id: {} and name: '{}'", savedProduct.getId(), savedProduct.getProductName());
 
         // Return response
         return productMapper.toResponseDTO(savedProduct);
@@ -92,16 +100,20 @@ public class ProductServiceImpl implements ProductService {
                         new ProductNotFoundException(
                                 "Product not found with id: " + id));
 
+        String trimmedName = requestDTO.getProductName() != null ? requestDTO.getProductName().trim() : "";
+
         // Check product name
-        if (productRepository.existsByProductNameAndIdNot(requestDTO.getProductName(), id)) {
-            throw new ProductAlreadyExistsException(requestDTO.getProductName());
+        if (productRepository.existsByProductNameAndIdNot(trimmedName, id)) {
+            throw new ProductAlreadyExistsException(trimmedName);
         }
 
         // Update entity using mapper
         productMapper.updateEntityFromDTO(requestDTO, existingProduct);
+        existingProduct.setProductName(trimmedName);
 
         // Save updated product
         Product updatedProduct = productRepository.save(existingProduct);
+        log.info("Successfully updated product with id: {}", id);
 
         // Return response DTO
         return productMapper.toResponseDTO(updatedProduct);
@@ -119,5 +131,6 @@ public class ProductServiceImpl implements ProductService {
         // Soft delete: keep row, hide from public list
         product.setIsActive(false);
         productRepository.save(product);
+        log.info("Successfully soft-deleted product with id: {}", id);
     }
 }

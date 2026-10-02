@@ -20,31 +20,39 @@ import java.util.List;
 // Implements vendor business logic
 @Service
 @RequiredArgsConstructor
-@Transactional(transactionManager = "appTransactionManager")
+@Transactional(transactionManager = "appTransactionManager", readOnly = true)
 public class VendorServiceImpl implements VendorService {
 
     private final VendorRepository vendorRepository;
     private final VendorMapper vendorMapper;
 
     @Override
+    @Transactional(transactionManager = "appTransactionManager")
     public VendorResponseDTO createVendor(VendorRequestDTO requestDTO) {
 
+        String vendorName = requestDTO.getVendorName() != null ? requestDTO.getVendorName().trim() : "";
+        String email = requestDTO.getEmail() != null ? requestDTO.getEmail().trim() : "";
+        String phone = requestDTO.getPhoneNumber() != null ? requestDTO.getPhoneNumber().trim() : "";
+
         // Check duplicates
-        if (vendorRepository.existsByVendorName(requestDTO.getVendorName())) {
+        if (vendorRepository.existsByVendorName(vendorName)) {
             throw new VendorAlreadyExistsException(
-                    "Vendor already exists with name: " + requestDTO.getVendorName());
+                    "Vendor already exists with name: " + vendorName);
         }
-        if (vendorRepository.existsByEmail(requestDTO.getEmail())) {
+        if (vendorRepository.existsByEmail(email)) {
             throw new VendorAlreadyExistsException(
-                    "Vendor already exists with email: " + requestDTO.getEmail());
+                    "Vendor already exists with email: " + email);
         }
-        if (vendorRepository.existsByPhoneNumber(requestDTO.getPhoneNumber())) {
+        if (vendorRepository.existsByPhoneNumber(phone)) {
             throw new VendorAlreadyExistsException(
-                    "Vendor already exists with phone: " + requestDTO.getPhoneNumber());
+                    "Vendor already exists with phone: " + phone);
         }
 
         // Convert DTO to entity
         Vendor vendor = vendorMapper.toEntity(requestDTO);
+        vendor.setVendorName(vendorName);
+        vendor.setEmail(email);
+        vendor.setPhoneNumber(phone);
         vendor.setIsActive(true);
         vendor.setCreatedBy(getCurrentUserId()); // save auth user id as Long
 
@@ -67,32 +75,42 @@ public class VendorServiceImpl implements VendorService {
     }
 
     @Override
+    @Transactional(transactionManager = "appTransactionManager")
     public VendorResponseDTO updateVendor(Long id, VendorRequestDTO requestDTO) {
         Vendor existing = vendorRepository.findById(id)
                 .orElseThrow(() -> new VendorNotFoundException(
                         "Vendor not found with id: " + id));
 
+        String vendorName = requestDTO.getVendorName() != null ? requestDTO.getVendorName().trim() : "";
+        String email = requestDTO.getEmail() != null ? requestDTO.getEmail().trim() : "";
+        String phone = requestDTO.getPhoneNumber() != null ? requestDTO.getPhoneNumber().trim() : "";
+
         // Check duplicates for other vendors
-        if (vendorRepository.existsByVendorNameAndIdNot(requestDTO.getVendorName(), id)) {
+        if (vendorRepository.existsByVendorNameAndIdNot(vendorName, id)) {
             throw new VendorAlreadyExistsException(
-                    "Vendor already exists with name: " + requestDTO.getVendorName());
+                    "Vendor already exists with name: " + vendorName);
         }
-        if (vendorRepository.existsByEmailAndIdNot(requestDTO.getEmail(), id)) {
+        if (vendorRepository.existsByEmailAndIdNot(email, id)) {
             throw new VendorAlreadyExistsException(
-                    "Vendor already exists with email: " + requestDTO.getEmail());
+                    "Vendor already exists with email: " + email);
         }
-        if (vendorRepository.existsByPhoneNumberAndIdNot(requestDTO.getPhoneNumber(), id)) {
+        if (vendorRepository.existsByPhoneNumberAndIdNot(phone, id)) {
             throw new VendorAlreadyExistsException(
-                    "Vendor already exists with phone: " + requestDTO.getPhoneNumber());
+                    "Vendor already exists with phone: " + phone);
         }
 
         // Update fields
         vendorMapper.updateEntityFromDTO(requestDTO, existing);
+        existing.setVendorName(vendorName);
+        existing.setEmail(email);
+        existing.setPhoneNumber(phone);
+
         Vendor updated = vendorRepository.save(existing);
         return vendorMapper.toResponseDTO(updated);
     }
 
     @Override
+    @Transactional(transactionManager = "appTransactionManager")
     public void deleteVendor(Long id) {
         Vendor vendor = vendorRepository.findById(id)
                 .orElseThrow(() -> new VendorNotFoundException(
